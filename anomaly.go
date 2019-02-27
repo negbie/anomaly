@@ -4,22 +4,29 @@ import (
 	"math"
 	"sort"
 
+	"github.com/chewxy/stl"
 	"github.com/gonum/stat/distuv"
 )
 
-func Detect(series []float64, k, a float64) []int {
+func Detect(series []float64, seasonality int, k, a float64) ([]int, []float64, error) {
 	data := copyslice(series)
 	n := len(data)
-	mo := int(float64(n) * k) // not the best way to round
+	decomp := stl.Decompose(data, seasonality, seasonality*2, stl.Additive(), stl.WithRobustIter(15), stl.WithIter(1))
+	if decomp.Err != nil {
+		return nil, nil, decomp.Err
+	}
+	copy(data, decomp.Resid)
+
+	mo := int(math.Round(float64(n) * k))
 	rIdx := make([]int, 0, mo)
 	st := &distuv.StudentsT{}
 
 	for i := 1; i < mo+1; i++ {
-		m := quickMedian(data)
-		//fmt.Println("quickMedian", m)
-		ares := aresMedian(data, m)
+		qm := quickMedian(data)
+		//fmt.Println("quickMedian", qm)
+		ares := aresMedian(data, qm)
 		//fmt.Println("bothAres(data)", mad(ares))
-		ares = aresMad(ares, mad(data, m))
+		ares = aresMad(ares, mad(data, qm))
 		//fmt.Println("aresDivMad(ares, ma)", mad(ares))
 		r, idx := maxIdx(ares)
 		//fmt.Println(r, data[idx])
@@ -45,5 +52,5 @@ func Detect(series []float64, k, a float64) []int {
 		}
 	}
 	sort.Ints(rIdx)
-	return rIdx
+	return rIdx, decomp.Resid, nil
 }
