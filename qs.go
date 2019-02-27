@@ -5,23 +5,23 @@ import (
 	"time"
 )
 
-// Quickselect selects the kth smallest item from array
-func Quickselect(array []float64, k int) {
+// quickselect selects the kth smallest item from array
+func quickselect(array []float64, k int) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	quickselect(array, k, 0, len(array), r)
+	qs(array, k, 0, len(array), r)
 }
 
-// quickselect is the main recursive quicksort routine
-func quickselect(array []float64, k int, first int, last int, r *rand.Rand) {
+// qs is the main recursive quicksort routine
+func qs(array []float64, k int, first int, last int, r *rand.Rand) {
 	if first == last-1 {
 		return
 	}
 
 	pivot := partitionItems(array, first, last, r)
 	if k < pivot {
-		quickselect(array, k, first, pivot, r)
+		qs(array, k, first, pivot, r)
 	} else if k > pivot {
-		quickselect(array, k, pivot+1, last, r)
+		qs(array, k, pivot+1, last, r)
 	} else {
 		return
 	}

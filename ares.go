@@ -27,7 +27,7 @@ func median(input []float64) float64 {
 func quickMedian(input []float64) float64 {
 	i := copyslice(input)
 	n := len(i)
-	Quickselect(i, n/2)
+	quickselect(i, n/2)
 	if (n % 2) == 0 {
 		return (i[n/2-1] + i[n/2]) / 2.0
 	}

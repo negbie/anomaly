@@ -7,7 +7,7 @@ import (
 	"github.com/gonum/stat/distuv"
 )
 
-func detectAnoms(series []float64, k, a float64) []int {
+func Detect(series []float64, k, a float64) []int {
 	data := copyslice(series)
 	n := len(data)
 	mo := int(float64(n) * k) // not the best way to round
