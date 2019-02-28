@@ -68,3 +68,52 @@ func maxIdx(input []float64) (max float64, idx int) {
 	}
 	return max, idx
 }
+
+func mean(xs []float64) float64 {
+	if len(xs) == 0 {
+		return math.NaN()
+	}
+	m := 0.0
+	for i, x := range xs {
+		m += (x - m) / float64(i+1)
+	}
+	return m
+}
+
+func variance(xs []float64) float64 {
+	if len(xs) == 0 {
+		return math.NaN()
+	} else if len(xs) <= 1 {
+		return 0
+	}
+	mean, M2 := 0.0, 0.0
+	for n, x := range xs {
+		delta := x - mean
+		mean += delta / float64(n+1)
+		M2 += delta * (x - mean)
+	}
+	return M2 / float64(len(xs)-1)
+}
+
+type by struct {
+	Indices []int
+	Values  []float64
+}
+
+func (b by) Len() int           { return len(b.Values) }
+func (b by) Less(i, j int) bool { return b.Values[i] < b.Values[j] }
+func (b by) Swap(i, j int) {
+	b.Indices[i], b.Indices[j] = b.Indices[j], b.Indices[i]
+	b.Values[i], b.Values[j] = b.Values[j], b.Values[i]
+}
+
+func orderIndex(input []float64) []int {
+	i := copyslice(input)
+	out := make([]int, len(i))
+
+	for k := range i {
+		out[k] = k
+	}
+	sort.Sort(by{Indices: out, Values: i})
+	return out
+}
