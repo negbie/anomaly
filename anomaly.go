@@ -4,27 +4,43 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"time"
 
 	"github.com/gonum/stat/distuv"
-	"github.com/negbie/stl"
+	"github.com/negbie/stlplus"
 )
 
-func Detect(series []float64, seasonality int, k, a float64) ([]int, []float64, error) {
+// https://arxiv.org/pdf/1704.07706.pdf
+// http://www.sbrc2018.ufscar.br/wp-content/uploads/2018/04/179351.pdf
+
+func Detect(dates []time.Time, series []float64, seasonality int, k, a float64, p bool) ([]int, []float64, error) {
 	if k < 0.01 || a < 0.01 {
 		return nil, nil, fmt.Errorf("k and a must be >= 0.01 but k is %f and a is %f", k, a)
 	}
 	n := len(series)
-	_, seasonal, r, err := stl.Decompose(series, seasonality, stl.OuterLoop(1), stl.InnerLoop(2))
+	trend, seasonal, resid, err := stlplus.Decompose(
+		series,
+		seasonality,
+		stlplus.OuterLoop(5),
+		stlplus.InnerLoop(1),
+	)
+
+	/* 	trend, seasonal, resid, err := stlminus.Decompose(
+		series,
+		seasonality,
+		stlminus.OuterLoop(5),
+		stlminus.InnerLoop(1),
+	) */
+
 	if err != nil {
 		return nil, nil, err
 	}
 	data := make([]float64, n)
-	//dataDecomp := make([]float64, n)
 	m := quickMedian(series)
 	for i := 0; i < n; i++ {
 		data[i] = series[i] - seasonal[i] - m
-		//dataDecomp[i] = trend[i] + seasonal[i]
 	}
+
 	mo := int(math.Round(float64(n) * k))
 
 	rIdx := make([]int, 0, mo)
@@ -105,5 +121,14 @@ func Detect(series []float64, seasonality int, k, a float64) ([]int, []float64, 
 		}
 	}
 	sort.Ints(rIdx)
-	return rIdx, r, nil
+
+	if p {
+		plts, err := plotDecomposed(dates, series, trend, seasonal, resid)
+		if err != nil {
+			return nil, nil, err
+		}
+		writeToPng(plts, "Decomposed Time Series", "./decomposed_at_"+time.Now().Format("2006-01-02T15:04:05")+".png", 45, 30)
+	}
+
+	return rIdx, data, nil
 }
